@@ -1,4 +1,7 @@
 package io.proj3ct.BestRouteBot.model;
 
-public class UserRepository {
+import org.springframework.data.repository.CrudRepository;
+
+public interface UserRepository extends CrudRepository<User, Long> {
+
 }

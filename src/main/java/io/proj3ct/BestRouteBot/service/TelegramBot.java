@@ -3,16 +3,20 @@ package io.proj3ct.BestRouteBot.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import io.proj3ct.BestRouteBot.config.BotConfig;
+import io.proj3ct.BestRouteBot.model.User;
+import io.proj3ct.BestRouteBot.model.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -21,7 +25,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private static final String HELP_TEXT = """
             Этот бот создан, чтобы помочь тебе построить удачный маршрут.
-            Ты можешь найти самый быстрый, самый дешевый или оптимальный маршрут, выбрав необходимые параметры в настройках. В них же можно задать точку отправления и точку назначения.
+            Ты можешь найти самый быстрый, самый дешевый или оптимальный маршрут, выбрав необходимые параметры в настройках. В них же можно задать  точку отправления и назначения.
 
             /changesettings - настройка параметров маршрута и его поиска. Выбор точки отправления и назначения и фильтр, по которому будет выполнен поиск лучшего маршрута.
 
@@ -29,6 +33,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             /find - выполнение поиска по заданным настройкам""";
     private final BotConfig config;
+    @Autowired
+    private UserRepository userRepository;
 
     public TelegramBot(BotConfig config) {
         this.config = config;
@@ -64,15 +70,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             long chatId = update.getMessage().getChatId();
 
             switch (messageText) {
-                case "/start":
+                case "/start" -> {
+                    registerUser(update.getMessage());
                     startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
-                    break;
-                case "/help":
-                    sendMessage(chatId, HELP_TEXT);
-                    break;
-                default:
-                    sendMessage(chatId, "Извините, такой команды не существует");
-                    break;
+                }
+                case "/help" -> sendMessage(chatId, HELP_TEXT);
+                default -> sendMessage(chatId, "Извините, такой команды не существует");
             }
         }
     }
@@ -94,4 +97,19 @@ public class TelegramBot extends TelegramLongPollingBot {
             log.error("Error occurred: " + e.getMessage());
         }
     }
+
+    private void registerUser(Message msg) {
+        if (userRepository.findById(msg.getChatId()).isEmpty()) {
+            var chatId = msg.getChatId();
+            var chat = msg.getChat();
+
+            User user = new User();
+            user.setChatId(chatId);
+            user.setFirstName(chat.getFirstName());
+
+            userRepository.save(user);
+            log.info("Пользователь сохранён: " + user);
+        }
+    }
+
 }
