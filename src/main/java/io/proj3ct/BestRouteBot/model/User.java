@@ -1,11 +1,14 @@
 package io.proj3ct.BestRouteBot.model;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
-@Entity(name = "usersDataTable")
+@Entity
+@Table(name = "user_data_table")
 public class User {
     @Id
     private Long chatId;
