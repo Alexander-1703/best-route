@@ -2,10 +2,12 @@ package io.proj3ct.BestRouteBot.service;
 
 import java.io.File;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -42,7 +44,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private static final String DEPARTURE_BUTTON = "departure button";
     private static final String DESTINATION_BUTTON = "destination button";
     private static final String DEPARTURE_DATE_BUTTON = "departure date button";
-    private static final String COMMAND_DOESNT_EXIST = "Извините, такой команды не существует";
+    private static final String COMMAND_DOESNT_EXIST = "Извините, данной команды не существует";
     private static final String HELP_TEXT = """
             Этот бот создан, чтобы помочь тебе построить удачный маршрут.
             Ты можешь найти самый быстрый, самый дешевый или оптимальный маршрут, выбрав необходимые параметры в настройках. В них же можно задать  точку отправления и назначения.
@@ -60,6 +62,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig config;
     @Autowired
     private UserRepository userRepository;
+    private boolean isInSettingsDeparture = false;
+    private boolean isInSettingsDestination = false;
+    private boolean isInSettingsDate = false;
 
     public TelegramBot(BotConfig config) {
         this.config = config;
@@ -102,7 +107,49 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 case "/menu" -> sendMessage(chatId, menuText(), menu());
                 case "/help" -> sendMessage(chatId, HELP_TEXT);
-                default -> sendMessage(chatId, COMMAND_DOESNT_EXIST);
+                default -> {
+                    User user = userRepository.findById(chatId).orElse(null);
+                    String msg = update.getMessage().getText();
+                    if (user == null) {
+                        log.error("User with id: " + chatId + " not found");
+                        return;
+                    }
+                    log.info("User with id: " + chatId + " found: " + user);
+                    //тут должна быть проверка, корректный ли введен город/дата
+                    if (isInSettingsDeparture) {
+                        isInSettingsDeparture = false;
+                        log.info("The user " + update.getMessage().getChat().getFirstName() +
+                                "entered the departure city: " + msg);
+                        user.setDeparture(msg);
+                        userRepository.save(user);
+                    } else if (isInSettingsDestination) {
+                        isInSettingsDestination = false;
+                        log.info("The user " + update.getMessage().getChat().getFirstName() +
+                                "entered the destination city: " + msg);
+                        user.setDestination(msg);
+                        userRepository.save(user);
+                    } else if (isInSettingsDate) {
+                        isInSettingsDate = false;
+                        log.info("The user " + update.getMessage().getChat().getFirstName() +
+                                "entered the date of departure: " + msg);
+                        LocalDate date;
+                        try {
+                            date = LocalDate.parse(msg);
+                        } catch (Exception e) {
+                            log.error("Error occurred: " + e.getMessage());
+                            sendMessage(chatId, "Дата введена некорректно, используйте формат yyyy-mm-dd");
+                            sendMessage(chatId, menuText(), settingsMenu());
+                            return;
+                        }
+                        user.setDate(date);
+                        userRepository.save(user);
+                    } else {
+                        sendMessage(chatId, COMMAND_DOESNT_EXIST);
+                        sendMessage(chatId, menuText(), menu());
+                        return;
+                    }
+                    sendMessage(chatId, menuText(), settingsMenu());
+                }
             }
             log.info("Message received from user: " + update.getMessage().getChat().getFirstName());
         } else if (update.hasCallbackQuery()) {
@@ -151,6 +198,30 @@ public class TelegramBot extends TelegramLongPollingBot {
                     editMessage.setText(HELP_TEXT);
                     editMessage.setReplyMarkup(
                             oneInLineButton(EmojiParser.parseToUnicode(":arrow_left: Назад"), RETURN_TO_MAIN_MENU));
+                    executeChecked(editMessage);
+                }
+                case DEPARTURE_BUTTON -> {
+                    isInSettingsDeparture = true;
+                    EditMessageText editMessage = new EditMessageText();
+                    editMessage.setChatId(chatId);
+                    editMessage.setMessageId(messageId);
+                    editMessage.setText("Введите город отправления");
+                    executeChecked(editMessage);
+                }
+                case DESTINATION_BUTTON -> {
+                    isInSettingsDestination = true;
+                    EditMessageText editMessage = new EditMessageText();
+                    editMessage.setChatId(chatId);
+                    editMessage.setMessageId(messageId);
+                    editMessage.setText("Введите город прибытия");
+                    executeChecked(editMessage);
+                }
+                case DEPARTURE_DATE_BUTTON -> {
+                    isInSettingsDate = true;
+                    EditMessageText editMessage = new EditMessageText();
+                    editMessage.setChatId(chatId);
+                    editMessage.setMessageId(messageId);
+                    editMessage.setText("Введите дату отправления в формате yyyy-mm-dd");
                     executeChecked(editMessage);
                 }
             }
