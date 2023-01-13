@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -105,13 +104,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                     registerUser(update.getMessage());
                     startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
                 }
-                case "/menu" -> sendMessage(chatId, menuText(), menu());
+                case "/menu" -> sendMessage(chatId, menuText(chatId), menu());
                 case "/help" -> sendMessage(chatId, HELP_TEXT);
                 default -> {
                     User user = userRepository.findById(chatId).orElse(null);
                     String msg = update.getMessage().getText();
-                    if (user == null) {
-                        log.error("User with id: " + chatId + " not found");
+                    if (!isUserExist(user, chatId)) {
                         return;
                     }
                     log.info("User with id: " + chatId + " found: " + user);
@@ -138,17 +136,17 @@ public class TelegramBot extends TelegramLongPollingBot {
                         } catch (Exception e) {
                             log.error("Error occurred: " + e.getMessage());
                             sendMessage(chatId, "Дата введена некорректно, используйте формат yyyy-mm-dd");
-                            sendMessage(chatId, menuText(), settingsMenu());
+                            sendMessage(chatId, menuText(chatId), settingsMenu());
                             return;
                         }
                         user.setDate(date);
                         userRepository.save(user);
                     } else {
                         sendMessage(chatId, COMMAND_DOESNT_EXIST);
-                        sendMessage(chatId, menuText(), menu());
+                        sendMessage(chatId, menuText(chatId), menu());
                         return;
                     }
-                    sendMessage(chatId, menuText(), settingsMenu());
+                    sendMessage(chatId, menuText(chatId), settingsMenu());
                 }
             }
             log.info("Message received from user: " + update.getMessage().getChat().getFirstName());
@@ -163,13 +161,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     deleteMessage.setChatId(chatId);
                     deleteMessage.setMessageId(messageId);
                     executeChecked(deleteMessage);
-                    sendMessage(chatId, menuText(), menu());
+                    sendMessage(chatId, menuText(chatId), menu());
                 }
                 case SETTINGS_BUTTON -> {
                     EditMessageText editMessage = new EditMessageText();
                     editMessage.setChatId(chatId);
                     editMessage.setMessageId(messageId);
-                    editMessage.setText(menuText());
+                    editMessage.setText(menuText(chatId));
                     editMessage.setReplyMarkup(settingsMenu());
                     executeChecked(editMessage);
                 }
@@ -187,7 +185,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     EditMessageText editMessage = new EditMessageText();
                     editMessage.setChatId(chatId);
                     editMessage.setMessageId(messageId);
-                    editMessage.setText(menuText());
+                    editMessage.setText(menuText(chatId));
                     editMessage.setReplyMarkup(menu());
                     executeChecked(editMessage);
                 }
@@ -367,13 +365,21 @@ public class TelegramBot extends TelegramLongPollingBot {
         return inlineKeyboardMarkup;
     }
 
-    private String menuText() {
-        //параметры должны приходить на вход извне
+    private String menuText(long chatId) {
+        String departure = null;
+        String destination = null;
+        LocalDate date = null;
+        User user = userRepository.findById(chatId).orElse(null);
+        if (isUserExist(user, chatId)) {
+            departure = user.getDeparture();
+            destination = user.getDestination();
+            date = user.getDate();
+        }
         return "Ты можешь настроить параметры маршрута, нажав на кнопку \"Настройки\".\n\n" +
                 "Текущие настройки:\n\n" +
-                "Отправление: Орск\n" +
-                "Прибытие: Санкт-Петербург\n" +
-                "Дата: 29.01.2023";
+                "Отправление: " + departure +
+                "\nПрибытие: " + destination +
+                "\nДата: " + date;
     }
 
     private <T extends Serializable, Method extends BotApiMethod<T>> void executeChecked(Method method) {
@@ -383,4 +389,13 @@ public class TelegramBot extends TelegramLongPollingBot {
             log.error("Error occurred: " + e.getMessage());
         }
     }
+
+    private boolean isUserExist(User user, long chatId) {
+        if (user == null) {
+            log.error("User with id: " + chatId + " not found");
+            return false;
+        }
+        return true;
+    }
+
 }
