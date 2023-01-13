@@ -71,7 +71,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         listOfCommands.add(new BotCommand("/start", "получить приветственное сообщение"));
         listOfCommands.add(new BotCommand("/menu", "открыть главное меню"));
         listOfCommands.add(new BotCommand("/settings", "настройки маршрута"));
-        listOfCommands.add(new BotCommand("/changesettings", "изменить текущие настройки"));
         listOfCommands.add(new BotCommand("/find", "поиск подходящего маршрута"));
         listOfCommands.add(new BotCommand("/help", "справка об использовании бота"));
 
@@ -105,6 +104,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                     startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
                 }
                 case "/menu" -> sendMessage(chatId, menuText(chatId), menu());
+                case "/settings" -> sendMessage(chatId, menuText(chatId), settingsMenu());
+                case "/find" -> sendMessage(chatId,
+                        "Тут должен выполняться алгоритм поиска оптимального маршрута, но пока его нет(",
+                        oneInLineButton(EmojiParser.parseToUnicode(":arrow_left: Назад"), RETURN_TO_MAIN_MENU));
                 case "/help" -> sendMessage(chatId, HELP_TEXT);
                 default -> {
                     User user = userRepository.findById(chatId).orElse(null);
