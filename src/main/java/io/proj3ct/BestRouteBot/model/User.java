@@ -1,6 +1,5 @@
 package io.proj3ct.BestRouteBot.model;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 
 import jakarta.persistence.Entity;
