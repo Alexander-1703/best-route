@@ -44,6 +44,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private static final String DESTINATION_BUTTON = "destination button";
     private static final String DEPARTURE_DATE_BUTTON = "departure date button";
     private static final String COMMAND_DOESNT_EXIST = "Извините, данной команды не существует";
+    private static final String NO_DATA = "Не указано";
     private static final String HELP_TEXT = """
             Этот бот создан, чтобы помочь тебе построить удачный маршрут.
             Ты можешь найти самый быстрый, самый дешевый или оптимальный маршрут, выбрав необходимые параметры в настройках. В них же можно задать  точку отправления и назначения.
@@ -380,9 +381,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         return "Ты можешь настроить параметры маршрута, нажав на кнопку \"Настройки\".\n\n" +
                 "Текущие настройки:\n\n" +
-                "Отправление: " + departure +
-                "\nПрибытие: " + destination +
-                "\nДата: " + date;
+                "Отправление: " + ((departure != null) ? departure : NO_DATA) +
+                "\nПрибытие: " + ((destination != null) ? destination : NO_DATA) +
+                "\nДата: " + ((date != null) ? date : NO_DATA);
     }
 
     private <T extends Serializable, Method extends BotApiMethod<T>> void executeChecked(Method method) {
