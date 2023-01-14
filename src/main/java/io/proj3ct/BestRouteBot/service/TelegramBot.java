@@ -141,17 +141,27 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     User user = userRepository.findById(chatId).orElse(null);
 
+                    if ((isInSettingsDeparture && (user.getDestination().equals(msg.toUpperCase()))) ||
+                            isInSettingsDestination && (user.getDeparture().equals(msg.toUpperCase()))) {
+                        isInSettingsDestination = false;
+                        isInSettingsDeparture = false;
+                        sendMessage(chatId, "Города отправления и прибытия совпадают");
+                        sendMessage(chatId, menuText(chatId), settingsMenu());
+                        log.info("Departure and arrival cities are the same: " + msg);
+                        return;
+                    }
+
                     if (isInSettingsDeparture) {
                         isInSettingsDeparture = false;
                         log.info("The user " + update.getMessage().getChat().getFirstName() +
                                 " entered the departure city: " + msg);
-                        user.setDeparture(msg);
+                        user.setDeparture(msg.toUpperCase());
                         userRepository.save(user);
                     } else if (isInSettingsDestination) {
                         isInSettingsDestination = false;
                         log.info("The user " + update.getMessage().getChat().getFirstName() +
                                 " entered the destination city: " + msg);
-                        user.setDestination(msg);
+                        user.setDestination(msg.toUpperCase());
                         userRepository.save(user);
                     } else if (isInSettingsDate) {
                         isInSettingsDate = false;
@@ -181,6 +191,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                     sendMessage(chatId, menuText(chatId), settingsMenu());
                 }
             }
+            isInSettingsDeparture = false;
+            isInSettingsDestination = false;
+            isInSettingsDate = false;
             log.info("Message received from user: " + update.getMessage().getChat().getFirstName());
         } else if (update.hasCallbackQuery()) {
             int messageId = update.getCallbackQuery().getMessage().getMessageId();
@@ -206,15 +219,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                         oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
                 case DEPARTURE_BUTTON -> {
                     isInSettingsDeparture = true;
-                    editMessage(chatId, messageId, "Введите город отправления");
+                    editMessage(chatId, messageId, "Введите город отправления:");
                 }
                 case DESTINATION_BUTTON -> {
                     isInSettingsDestination = true;
-                    editMessage(chatId, messageId, "Введите город прибытия");
+                    editMessage(chatId, messageId, "Введите город прибытия:");
                 }
                 case DEPARTURE_DATE_BUTTON -> {
                     isInSettingsDate = true;
-                    editMessage(chatId, messageId, "Введите дату отправления в формате yyyy-mm-dd");
+                    editMessage(chatId, messageId, "Введите дату отправления в формате yyyy-mm-dd:");
                 }
             }
             log.info("Callback data received from user: " + update.getMessage().getChat().getFirstName());
@@ -378,7 +391,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public String firstUpperCase(String word) {
         if (word == null || word.isEmpty()) return "";
-        return word.substring(0, 1).toUpperCase() + word.substring(1);
+        return word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase();
     }
 
     private <T extends Serializable, Method extends BotApiMethod<T>> void executeChecked(Method method) {
