@@ -121,19 +121,19 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (isInSettingsDeparture) {
                         isInSettingsDeparture = false;
                         log.info("The user " + update.getMessage().getChat().getFirstName() +
-                                "entered the departure city: " + msg);
+                                " entered the departure city: " + msg);
                         user.setDeparture(msg);
                         userRepository.save(user);
                     } else if (isInSettingsDestination) {
                         isInSettingsDestination = false;
                         log.info("The user " + update.getMessage().getChat().getFirstName() +
-                                "entered the destination city: " + msg);
+                                " entered the destination city: " + msg);
                         user.setDestination(msg);
                         userRepository.save(user);
                     } else if (isInSettingsDate) {
                         isInSettingsDate = false;
                         log.info("The user " + update.getMessage().getChat().getFirstName() +
-                                "entered the date of departure: " + msg);
+                                " entered the date of departure: " + msg);
                         LocalDate date;
                         try {
                             date = LocalDate.parse(msg);
