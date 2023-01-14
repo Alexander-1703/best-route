@@ -1,5 +1,6 @@
 package io.proj3ct.BestRouteBot.service;
 
+import java.awt.Stroke;
 import java.io.File;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -44,6 +45,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private static final String DESTINATION_BUTTON = "destination button";
     private static final String DEPARTURE_DATE_BUTTON = "departure date button";
     private static final String COMMAND_DOESNT_EXIST = "Извините, данной команды не существует";
+    private static final String ERROR_OCCURRED = "Error occurred: ";
+    private static final String RETURN_BUTTON_TEXT = ":arrow_left: Назад";
     private static final String NO_DATA = "Не указано";
     private static final String HELP_TEXT = """
             Этот бот создан, чтобы помочь тебе построить удачный маршрут.
@@ -99,6 +102,15 @@ public class TelegramBot extends TelegramLongPollingBot {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
 
+            if (messageText.contains("/send") && config.getOwnerId() == chatId) {
+                var textToSend = EmojiParser.parseToUnicode(messageText.substring(messageText.indexOf(" ")));
+                var users = userRepository.findAll();
+                for (User user : users) {
+                    sendMessage(user.getChatId(), textToSend);
+                }
+                return;
+            }
+
             switch (messageText) {
                 case "/start" -> {
                     registerUser(update.getMessage());
@@ -108,7 +120,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "/settings" -> sendMessage(chatId, menuText(chatId), settingsMenu());
                 case "/find" -> sendMessage(chatId,
                         "Тут должен выполняться алгоритм поиска оптимального маршрута, но пока его нет(",
-                        oneInLineButton(EmojiParser.parseToUnicode(":arrow_left: Назад"), RETURN_TO_MAIN_MENU));
+                        oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
                 case "/help" -> sendMessage(chatId, HELP_TEXT);
                 default -> {
                     User user = userRepository.findById(chatId).orElse(null);
@@ -138,8 +150,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                         try {
                             date = LocalDate.parse(msg);
                         } catch (Exception e) {
-                            log.error("Error occurred: " + e.getMessage());
+                            log.error(ERROR_OCCURRED + e.getMessage());
                             sendMessage(chatId, "Дата введена некорректно, используйте формат yyyy-mm-dd");
+                            sendMessage(chatId, menuText(chatId), settingsMenu());
+                            return;
+                        }
+                        if (LocalDate.now().isAfter(date)) {
+                            sendMessage(chatId, "Эту дату выбрать нельзя");
                             sendMessage(chatId, menuText(chatId), settingsMenu());
                             return;
                         }
@@ -167,64 +184,26 @@ public class TelegramBot extends TelegramLongPollingBot {
                     executeChecked(deleteMessage);
                     sendMessage(chatId, menuText(chatId), menu());
                 }
-                case SETTINGS_BUTTON -> {
-                    EditMessageText editMessage = new EditMessageText();
-                    editMessage.setChatId(chatId);
-                    editMessage.setMessageId(messageId);
-                    editMessage.setText(menuText(chatId));
-                    editMessage.setReplyMarkup(settingsMenu());
-                    executeChecked(editMessage);
-                }
+                case SETTINGS_BUTTON -> editMessage(chatId, messageId, menuText(chatId), settingsMenu());
                 case FIND_BUTTON -> {
-                    EditMessageText editMessage = new EditMessageText();
-                    editMessage.setChatId(chatId);
-                    editMessage.setMessageId(messageId);
-                    //searchBestRouteMethod();
-                    editMessage.setText("Тут должен выполняться алгоритм поиска оптимального маршрута, но пока его нет(");
-                    editMessage.setReplyMarkup(
-                            oneInLineButton(EmojiParser.parseToUnicode(":arrow_left: Назад"), RETURN_TO_MAIN_MENU));
-                    executeChecked(editMessage);
+                    String text = "Тут должен выполняться алгоритм поиска оптимального маршрута, но пока его нет(";
+                    editMessage(chatId, messageId, text,
+                            oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
                 }
-                case RETURN_TO_MAIN_MENU -> {
-                    EditMessageText editMessage = new EditMessageText();
-                    editMessage.setChatId(chatId);
-                    editMessage.setMessageId(messageId);
-                    editMessage.setText(menuText(chatId));
-                    editMessage.setReplyMarkup(menu());
-                    executeChecked(editMessage);
-                }
-                case HELP_BUTTON -> {
-                    EditMessageText editMessage = new EditMessageText();
-                    editMessage.setChatId(chatId);
-                    editMessage.setMessageId(messageId);
-                    editMessage.setText(HELP_TEXT);
-                    editMessage.setReplyMarkup(
-                            oneInLineButton(EmojiParser.parseToUnicode(":arrow_left: Назад"), RETURN_TO_MAIN_MENU));
-                    executeChecked(editMessage);
-                }
+                case RETURN_TO_MAIN_MENU -> editMessage(chatId, messageId, menuText(chatId), menu());
+                case HELP_BUTTON -> editMessage(chatId, messageId, HELP_TEXT,
+                        oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
                 case DEPARTURE_BUTTON -> {
                     isInSettingsDeparture = true;
-                    EditMessageText editMessage = new EditMessageText();
-                    editMessage.setChatId(chatId);
-                    editMessage.setMessageId(messageId);
-                    editMessage.setText("Введите город отправления");
-                    executeChecked(editMessage);
+                    editMessage(chatId, messageId, "Введите город отправления");
                 }
                 case DESTINATION_BUTTON -> {
                     isInSettingsDestination = true;
-                    EditMessageText editMessage = new EditMessageText();
-                    editMessage.setChatId(chatId);
-                    editMessage.setMessageId(messageId);
-                    editMessage.setText("Введите город прибытия");
-                    executeChecked(editMessage);
+                    editMessage(chatId, messageId, "Введите город прибытия");
                 }
                 case DEPARTURE_DATE_BUTTON -> {
                     isInSettingsDate = true;
-                    EditMessageText editMessage = new EditMessageText();
-                    editMessage.setChatId(chatId);
-                    editMessage.setMessageId(messageId);
-                    editMessage.setText("Введите дату отправления в формате yyyy-mm-dd");
-                    executeChecked(editMessage);
+                    editMessage(chatId, messageId, "Введите дату отправления в формате yyyy-mm-dd");
                 }
             }
             log.info("Callback data received from user: " + update.getMessage().getChat().getFirstName());
@@ -257,7 +236,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         rowInLine = new ArrayList<>();
         InlineKeyboardButton returnButton = new InlineKeyboardButton();
-        returnButton.setText(EmojiParser.parseToUnicode(":arrow_left: Назад"));
+        returnButton.setText(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT));
         returnButton.setCallbackData(RETURN_TO_MAIN_MENU);
         rowInLine.add(returnButton);
         rowsInLine.add(rowInLine);
@@ -298,7 +277,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             execute(sendPhoto);
         } catch (TelegramApiException e) {
-            log.error("Error occurred: " + e.getMessage());
+            log.error(ERROR_OCCURRED + e.getMessage());
         }
 
         log.info("Replied to user " + firstName);
@@ -390,7 +369,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             execute(method);
         } catch (TelegramApiException e) {
-            log.error("Error occurred: " + e.getMessage());
+            log.error(ERROR_OCCURRED + e.getMessage());
         }
     }
 
@@ -400,6 +379,23 @@ public class TelegramBot extends TelegramLongPollingBot {
             return false;
         }
         return true;
+    }
+
+    private void editMessage(long chatId, int messageId, String text, InlineKeyboardMarkup inlineKeyboardMarkup) {
+        EditMessageText editMessage = new EditMessageText();
+        editMessage.setChatId(chatId);
+        editMessage.setMessageId(messageId);
+        editMessage.setText(text);
+        editMessage.setReplyMarkup(inlineKeyboardMarkup);
+        executeChecked(editMessage);
+    }
+
+    private void editMessage(long chatId, int messageId, String text) {
+        EditMessageText editMessage = new EditMessageText();
+        editMessage.setChatId(chatId);
+        editMessage.setMessageId(messageId);
+        editMessage.setText(text);
+        executeChecked(editMessage);
     }
 
 }
