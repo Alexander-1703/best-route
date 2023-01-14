@@ -1,11 +1,11 @@
 package io.proj3ct.BestRouteBot.service;
 
-import java.awt.Stroke;
 import java.io.File;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -28,6 +28,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import com.vdurmont.emoji.EmojiParser;
 
 import io.proj3ct.BestRouteBot.config.BotConfig;
+import io.proj3ct.BestRouteBot.model.City;
+import io.proj3ct.BestRouteBot.model.CityRepository;
 import io.proj3ct.BestRouteBot.model.User;
 import io.proj3ct.BestRouteBot.model.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -63,8 +65,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             """;
 
     private final BotConfig config;
+
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private CityRepository cityRepository;
     private boolean isInSettingsDeparture = false;
     private boolean isInSettingsDestination = false;
     private boolean isInSettingsDate = false;
@@ -123,13 +128,19 @@ public class TelegramBot extends TelegramLongPollingBot {
                         oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
                 case "/help" -> sendMessage(chatId, HELP_TEXT);
                 default -> {
-                    User user = userRepository.findById(chatId).orElse(null);
                     String msg = update.getMessage().getText();
-                    if (!isUserExist(user, chatId)) {
+
+                    if ((isInSettingsDeparture || isInSettingsDestination) && !isCityExist(msg)) {
+                        isInSettingsDestination = false;
+                        isInSettingsDeparture = false;
+                        sendMessage(chatId, "Вы ввели несуществующий город");
+                        sendMessage(chatId, menuText(chatId), settingsMenu());
+                        log.info("introduced a non-existent city: " + msg);
                         return;
                     }
-                    log.info("User with id: " + chatId + " found: " + user);
-                    //тут должна быть проверка, корректный ли введен город/дата
+
+                    User user = userRepository.findById(chatId).orElse(null);
+
                     if (isInSettingsDeparture) {
                         isInSettingsDeparture = false;
                         log.info("The user " + update.getMessage().getChat().getFirstName() +
@@ -303,7 +314,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void registerUser(Message msg) {
-        if (userRepository.findById(msg.getChatId()).isEmpty()) {
+        if (!userRepository.existsById(msg.getChatId())) {
             var chatId = msg.getChatId();
             var chat = msg.getChat();
 
@@ -353,16 +364,21 @@ public class TelegramBot extends TelegramLongPollingBot {
         String destination = null;
         LocalDate date = null;
         User user = userRepository.findById(chatId).orElse(null);
-        if (isUserExist(user, chatId)) {
+        if (user != null) {
             departure = user.getDeparture();
             destination = user.getDestination();
             date = user.getDate();
         }
         return "Ты можешь настроить параметры маршрута, нажав на кнопку \"Настройки\".\n\n" +
                 "Текущие настройки:\n\n" +
-                "Отправление: " + ((departure != null) ? departure : NO_DATA) +
-                "\nПрибытие: " + ((destination != null) ? destination : NO_DATA) +
+                "Отправление: " + ((departure != null) ? firstUpperCase(departure) : NO_DATA) +
+                "\nПрибытие: " + ((destination != null) ? firstUpperCase(destination) : NO_DATA) +
                 "\nДата: " + ((date != null) ? date : NO_DATA);
+    }
+
+    public String firstUpperCase(String word) {
+        if (word == null || word.isEmpty()) return "";
+        return word.substring(0, 1).toUpperCase() + word.substring(1);
     }
 
     private <T extends Serializable, Method extends BotApiMethod<T>> void executeChecked(Method method) {
@@ -371,14 +387,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             log.error(ERROR_OCCURRED + e.getMessage());
         }
-    }
-
-    private boolean isUserExist(User user, long chatId) {
-        if (user == null) {
-            log.error("User with id: " + chatId + " not found");
-            return false;
-        }
-        return true;
     }
 
     private void editMessage(long chatId, int messageId, String text, InlineKeyboardMarkup inlineKeyboardMarkup) {
@@ -396,6 +404,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         editMessage.setMessageId(messageId);
         editMessage.setText(text);
         executeChecked(editMessage);
+    }
+
+    private boolean isCityExist(String msg) {
+        return cityRepository.existsById(msg.toUpperCase());
     }
 
 }
