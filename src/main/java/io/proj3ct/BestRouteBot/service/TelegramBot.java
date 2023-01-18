@@ -5,7 +5,6 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import com.vdurmont.emoji.EmojiParser;
 
 import io.proj3ct.BestRouteBot.config.BotConfig;
-import io.proj3ct.BestRouteBot.model.City;
 import io.proj3ct.BestRouteBot.model.CityRepository;
 import io.proj3ct.BestRouteBot.model.User;
 import io.proj3ct.BestRouteBot.model.UserRepository;
@@ -40,7 +38,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private static final String MENU_BUTTON = "main menu button";
     private static final String SETTINGS_BUTTON = "settings button";
-    private static final String FIND_BUTTON = "find button";
+    private static final String SEARCH_BUTTON = "search menu button";
+    private static final String FIND_FASTEST = "fastest route";
+    private static final String FIND_OPTIMAL = "optimal route";
+    private static final String FIND_CHEAPEST = "cheapest route";
     private static final String RETURN_TO_MAIN_MENU = "return to main menu";
     private static final String HELP_BUTTON = "help button";
     private static final String DEPARTURE_BUTTON = "departure button";
@@ -209,8 +210,45 @@ public class TelegramBot extends TelegramLongPollingBot {
                     sendMessage(chatId, menuText(chatId), menu());
                 }
                 case SETTINGS_BUTTON -> editMessage(chatId, messageId, menuText(chatId), settingsMenu());
-                case FIND_BUTTON -> {
-                    String text = "Тут должен выполняться алгоритм поиска оптимального маршрута, но пока его нет(";
+                case SEARCH_BUTTON -> {
+                    InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                    List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
+                    List<InlineKeyboardButton> rowInLine = new ArrayList<>();
+                    InlineKeyboardButton fastestButton = new InlineKeyboardButton();
+                    fastestButton.setText("Самый быстрый");
+                    fastestButton.setCallbackData(FIND_FASTEST);
+                    rowInLine.add(fastestButton);
+                    rowsInLine.add(rowInLine);
+
+                    rowInLine = new ArrayList<>();
+                    InlineKeyboardButton cheapestButton = new InlineKeyboardButton();
+                    cheapestButton.setText("Самый дешевый");
+                    cheapestButton.setCallbackData(FIND_CHEAPEST);
+                    rowInLine.add(cheapestButton);
+                    rowsInLine.add(rowInLine);
+
+                    rowInLine = new ArrayList<>();
+                    InlineKeyboardButton optimalButton = new InlineKeyboardButton();
+                    optimalButton.setText("Оптимальный");
+                    optimalButton.setCallbackData(FIND_OPTIMAL);
+                    rowInLine.add(optimalButton);
+                    rowsInLine.add(rowInLine);
+
+                    inlineKeyboardMarkup.setKeyboard(rowsInLine);
+                    editMessage(chatId, messageId, "Какой маршрут искать?", inlineKeyboardMarkup);
+                }
+                case FIND_CHEAPEST -> {
+                    String text = "Поиск самого дешевого маршрута...";
+                    editMessage(chatId, messageId, text,
+                            oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
+                }
+                case FIND_FASTEST -> {
+                    String text = "Поиск самого быстрого маршрута...";
+                    editMessage(chatId, messageId, text,
+                            oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
+                }
+                case FIND_OPTIMAL -> {
+                    String text = "Поиск оптимального маршрута...";
                     editMessage(chatId, messageId, text,
                             oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
                 }
@@ -353,11 +391,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         rowsInLine.add(rowInLine);
 
         rowInLine = new ArrayList<>();
-        InlineKeyboardButton findButton = new InlineKeyboardButton();
+        InlineKeyboardButton searchButton = new InlineKeyboardButton();
         String find = EmojiParser.parseToUnicode(":mag: Найти");
-        findButton.setText(find);
-        findButton.setCallbackData(FIND_BUTTON);
-        rowInLine.add(findButton);
+        searchButton.setText(find);
+        searchButton.setCallbackData(SEARCH_BUTTON);
+        rowInLine.add(searchButton);
         rowsInLine.add(rowInLine);
 
         rowInLine = new ArrayList<>();
