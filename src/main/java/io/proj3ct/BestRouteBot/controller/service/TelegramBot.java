@@ -88,6 +88,25 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     }
 
+    public static String universalCapitalize(String string) {
+        string = string.toLowerCase();
+        if (string.contains("-") || string.contains(" ")) {
+            String symbol = string.contains("-") ? "-" : " ";
+            String[] strArr = string.split(symbol);
+            StringBuilder sb = new StringBuilder();
+            for (String str : strArr) {
+                sb.append(capitalize(str)).append(symbol);
+            }
+            return sb.substring(0, sb.length()-1);
+        }
+        return capitalize(string);
+    }
+
+    public static String capitalize(String str) {
+        if (str == null || str.length() <= 1) return str;
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
     @Override
     public String getBotUsername() {
         return config.getBotName();
@@ -169,8 +188,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         String dest = user.getDestination();
         String dep = user.getDeparture();
-        if ((isInSettingsDeparture && dest != null && (dest.equals(msg.toUpperCase()))) ||
-                isInSettingsDestination && dep != null && (dep.equals(msg.toUpperCase()))) {
+        if ((isInSettingsDeparture && dest != null && (dest.equals(universalCapitalize(msg)))) ||
+                isInSettingsDestination && dep != null && (dep.equals(universalCapitalize(msg)))) {
             isInSettingsDestination = false;
             isInSettingsDeparture = false;
             message = MessageUtil.sendMessage(chatId, "Города отправления и прибытия совпадают");
@@ -185,13 +204,13 @@ public class TelegramBot extends TelegramLongPollingBot {
             isInSettingsDeparture = false;
             log.info("The user " + update.getMessage().getChat().getFirstName() +
                     " entered the departure city: " + msg);
-            user.setDeparture(msg.toUpperCase());
+            user.setDeparture(universalCapitalize(msg));
             userRepository.save(user);
         } else if (isInSettingsDestination) {
             isInSettingsDestination = false;
             log.info("The user " + update.getMessage().getChat().getFirstName() +
                     " entered the destination city: " + msg);
-            user.setDestination(msg.toUpperCase());
+            user.setDestination(universalCapitalize(msg));
             userRepository.save(user);
         } else if (isInSettingsDate) {
             isInSettingsDate = false;
@@ -289,8 +308,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         return "Ты можешь настроить параметры маршрута, нажав на кнопку \"Настройки\".\n\n" +
                 "Текущие настройки:\n\n" +
-                "Отправление: " + ((departure != null) ? departure.toUpperCase() : NO_DATA) +
-                "\nПрибытие: " + ((destination != null) ? destination.toUpperCase() : NO_DATA) +
+                "Отправление: " + ((departure != null) ? universalCapitalize(departure) : NO_DATA) +
+                "\nПрибытие: " + ((destination != null) ? universalCapitalize(destination) : NO_DATA) +
                 "\nДата: " + ((date != null) ? date : NO_DATA);
     }
 
@@ -303,7 +322,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private boolean isCityExist(String msg) {
-        return cityRepository.existsById(msg.toUpperCase());
+        return cityRepository.existsById(universalCapitalize(msg));
     }
 
     private void callBackResponse(Update update) {
