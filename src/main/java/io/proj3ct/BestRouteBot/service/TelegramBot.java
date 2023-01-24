@@ -125,7 +125,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "/menu" -> sendMessage(chatId, menuText(chatId), menu());
                 case "/settings" -> sendMessage(chatId, menuText(chatId), settingsMenu());
                 case "/find" -> sendMessage(chatId,
-                        "Тут должен выполняться алгоритм поиска оптимального маршрута, но пока его нет(",
+                            "Тут должен выполняться алгоритм поиска оптимального маршрута, но пока его нет(",
                         oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
                 case "/help" -> sendMessage(chatId, HELP_TEXT);
                 default -> {
@@ -142,8 +142,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     User user = userRepository.findById(chatId).orElse(null);
 
-                    if ((isInSettingsDeparture && (user.getDestination().equals(msg.toUpperCase()))) ||
-                            isInSettingsDestination && (user.getDeparture().equals(msg.toUpperCase()))) {
+                    String dest = user.getDestination();
+                    String dep = user.getDeparture();
+                    if ((isInSettingsDeparture && dest != null && (dest.equals(msg.toUpperCase()))) ||
+                            isInSettingsDestination && dep != null && (dep.equals(msg.toUpperCase()))) {
                         isInSettingsDestination = false;
                         isInSettingsDeparture = false;
                         sendMessage(chatId, "Города отправления и прибытия совпадают");
@@ -332,9 +334,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendPhoto.setChatId(chatId);
         sendPhoto.setCaption(answer);
         sendPhoto.setReplyMarkup(inlineKeyboardMarkup);
-        //поменять на относительный путь или url
         sendPhoto.setPhoto(new InputFile(
-                new File("D:\\JavaProjects\\BestRoute\\src\\main\\resources\\pictures\\map.jpg")
+                new File("src/main/resources/pictures/map.jpg")
         ));
         try {
             execute(sendPhoto);
@@ -422,14 +423,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         return "Ты можешь настроить параметры маршрута, нажав на кнопку \"Настройки\".\n\n" +
                 "Текущие настройки:\n\n" +
-                "Отправление: " + ((departure != null) ? firstUpperCase(departure) : NO_DATA) +
-                "\nПрибытие: " + ((destination != null) ? firstUpperCase(destination) : NO_DATA) +
+                "Отправление: " + ((departure != null) ? departure.toUpperCase() : NO_DATA) +
+                "\nПрибытие: " + ((destination != null) ? destination.toUpperCase() : NO_DATA) +
                 "\nДата: " + ((date != null) ? date : NO_DATA);
-    }
-
-    public String firstUpperCase(String word) {
-        if (word == null || word.isEmpty()) return "";
-        return word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase();
     }
 
     private <T extends Serializable, Method extends BotApiMethod<T>> void executeChecked(Method method) {
