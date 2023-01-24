@@ -77,12 +77,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public TelegramBot(BotConfig config) {
         this.config = config;
-        List<BotCommand> listOfCommands = new ArrayList<>();
-        listOfCommands.add(new BotCommand("/start", "получить приветственное сообщение"));
-        listOfCommands.add(new BotCommand("/menu", "открыть главное меню"));
-        listOfCommands.add(new BotCommand("/settings", "настройки маршрута"));
-        listOfCommands.add(new BotCommand("/find", "поиск подходящего маршрута"));
-        listOfCommands.add(new BotCommand("/help", "справка об использовании бота"));
+        List<BotCommand> listOfCommands = List.of(
+                new BotCommand("/start", "получить приветственное сообщение"),
+                new BotCommand("/menu", "открыть главное меню"),
+                new BotCommand("/settings", "настройки маршрута"),
+                new BotCommand("/find", "поиск подходящего маршрута"),
+                new BotCommand("/help", "справка об использовании бота"));
 
         try {
             this.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
@@ -125,7 +125,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "/menu" -> sendMessage(chatId, menuText(chatId), menu());
                 case "/settings" -> sendMessage(chatId, menuText(chatId), settingsMenu());
                 case "/find" -> sendMessage(chatId,
-                            "Тут должен выполняться алгоритм поиска оптимального маршрута, но пока его нет(",
+                        "Тут должен выполняться алгоритм поиска оптимального маршрута, но пока его нет(",
                         oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
                 case "/help" -> sendMessage(chatId, HELP_TEXT);
                 default -> {
@@ -179,8 +179,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                             sendMessage(chatId, menuText(chatId), settingsMenu());
                             return;
                         }
-                        if (LocalDate.now().isAfter(date)) {
-                            sendMessage(chatId, "Эту дату выбрать нельзя");
+
+                        LocalDate nowDate = LocalDate.now();
+                        LocalDate maxDate = nowDate.plusYears(1);
+                        if (nowDate.isAfter(date) ||
+                                !date.isBefore(LocalDate.of(maxDate.getYear(), maxDate.getMonth(), 1))) {
+                            sendMessage(chatId, "Эту дату выбрать нельзя. Дата должна быть больше текущей " +
+                                    "и не превышать год от нее.");
                             sendMessage(chatId, menuText(chatId), settingsMenu());
                             return;
                         }
