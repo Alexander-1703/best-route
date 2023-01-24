@@ -1,4 +1,4 @@
-package io.proj3ct.BestRouteBot.config;
+package io.proj3ct.BestRouteBot.controller.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
