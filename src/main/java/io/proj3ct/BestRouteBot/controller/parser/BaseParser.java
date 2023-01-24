@@ -12,7 +12,7 @@ public class BaseParser {
         WebDriverManager.chromedriver().setup();
         Configuration.browser = "chrome";
         Configuration.driverManagerEnabled = true;
-        Configuration.holdBrowserOpen = true; // delete
+//        Configuration.holdBrowserOpen = true; // delete
         Configuration.timeout = 8_000;
     }
 }

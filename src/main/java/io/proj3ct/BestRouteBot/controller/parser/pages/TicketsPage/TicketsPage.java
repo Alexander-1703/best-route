@@ -5,7 +5,6 @@ import org.openqa.selenium.By;
 import io.proj3ct.BestRouteBot.controller.parser.pages.Loadable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selectors.*;
@@ -42,8 +41,7 @@ public class TicketsPage implements Loadable {
         List<SelenideElement> ticketElems = $$(TICKET_CARD)
                 .asFixedIterable()
                 .stream()
-                .limit(10)
-                .collect(Collectors.toList());
+                .limit(10).toList();
         List<Ticket> tickets = new ArrayList<>(10);
 
         for (var elem: ticketElems) {

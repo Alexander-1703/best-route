@@ -23,6 +23,9 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import com.vdurmont.emoji.EmojiParser;
 
 import io.proj3ct.BestRouteBot.controller.config.BotConfig;
+import io.proj3ct.BestRouteBot.controller.parser.Parser;
+import io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage.Ticket;
+import io.proj3ct.BestRouteBot.controller.parser.pages.searchPage.TripType;
 import io.proj3ct.BestRouteBot.model.CityRepository;
 import io.proj3ct.BestRouteBot.model.User;
 import io.proj3ct.BestRouteBot.model.UserRepository;
@@ -37,7 +40,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private static final String SETTINGS_BUTTON = "settings button";
     private static final String SEARCH_BUTTON = "search menu button";
     private static final String FIND_FASTEST = "fastest route";
-    private static final String FIND_OPTIMAL = "optimal route";
     private static final String FIND_CHEAPEST = "cheapest route";
     private static final String RETURN_TO_MAIN_MENU = "return to main menu";
     private static final String HELP_BUTTON = "help button";
@@ -97,7 +99,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (String str : strArr) {
                 sb.append(capitalize(str)).append(symbol);
             }
-            return sb.substring(0, sb.length()-1);
+            return sb.substring(0, sb.length() - 1);
         }
         return capitalize(string);
     }
@@ -180,11 +182,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
 
-        User user = userRepository.findById(chatId).orElse(null);
-        if (user == null) {
-            log.error(ERROR_OCCURRED + "user NPE");
-            throw new NullPointerException();
-        }
+        User user = getUser(chatId);
 
         String dest = user.getDestination();
         String dep = user.getDeparture();
@@ -349,15 +347,17 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             case FIND_CHEAPEST -> {
                 String text = "Поиск самого дешевого маршрута...";
-                EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
-                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
-                executeChecked(editMessage);
+                findRoute(chatId, true);
+//                EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
+//                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
+//                executeChecked(editMessage);
             }
             case FIND_FASTEST -> {
                 String text = "Поиск самого быстрого маршрута...";
-                EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
-                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
-                executeChecked(editMessage);
+                findRoute(chatId, false);
+//                EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
+//                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
+//                executeChecked(editMessage);
             }
             case RETURN_TO_MAIN_MENU -> {
                 EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, menuText(chatId), menu());
@@ -385,6 +385,32 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
         log.info("Callback data received from user: " + update.getMessage().getChat().getFirstName());
+    }
+
+    private void findRoute(long chatId, boolean isCheapest) {
+        User user = getUser(chatId);
+        List<Ticket> ticketsList = new Parser().getTickets(user.getDeparture(), user.getDestination(), user.getDate().toString(),
+                1, 0, 0, TripType.Economic);
+        for (Ticket ticket : ticketsList) {
+            String text = "Ссылка: " + ticket.getUrl() +
+                    "\n" + ticket.getWayPoints() +
+                    "\n" + ticket.getDateStart() + " " + ticket.getTimeStart() +
+                    "   " + ticket.getDateEnd() + " " + ticket.getTimeEnd() +
+                    "\n" + ticket.getTripTime() +
+                    "\n" + ticket.getTransferAmount() +
+                    "\n" + ticket.getPrice();
+            SendMessage message = MessageUtil.sendMessage(chatId, text);
+            executeChecked(message);
+        }
+    }
+
+    private User getUser(long chatId) {
+        User user = userRepository.findById(chatId).orElse(null);
+        if (user == null) {
+            log.error(ERROR_OCCURRED + "user NPE");
+            throw new NullPointerException();
+        }
+        return user;
     }
 
     private InlineKeyboardMarkup searchMenuMarkup() {
