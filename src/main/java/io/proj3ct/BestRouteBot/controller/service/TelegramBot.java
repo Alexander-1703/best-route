@@ -48,11 +48,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     private static final String ERROR_OCCURRED = "Error occurred: ";
     private static final String RETURN_BUTTON_TEXT = ":arrow_left: Назад";
     private static final String NO_DATA = "Не указано";
+    private static final String WHICH_SEARCH = "Какой маршрут искать?";
     private static final String HELP_TEXT = """
             Этот бот создан, чтобы помочь тебе построить удачный маршрут.
             Ты можешь найти самый быстрый, самый дешевый или оптимальный маршрут, выбрав необходимые параметры в настройках. В них же можно задать  точку отправления и назначения.
-
-            /changesettings - настройка параметров маршрута и его поиска. Выбор точки отправления и назначения и фильтр, по которому будет выполнен поиск лучшего маршрута.
 
             /settings - просмотр текущих настроек.
 
@@ -129,8 +128,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     executeChecked(message);
                 }
                 case "/find" -> {
-                    SendMessage message = MessageUtil.sendMessage(chatId, "Тут должен выполняться алгоритм поиска оптимального маршрута, но пока его нет(",
-                            CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
+                    InlineKeyboardMarkup inlineKeyboardMarkup = searchMenuMarkup();
+                    SendMessage message = MessageUtil.sendMessage(chatId, WHICH_SEARCH, inlineKeyboardMarkup);
                     executeChecked(message);
                 }
                 case "/help" -> {
@@ -324,14 +323,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 executeChecked(editMessage);
             }
             case SEARCH_BUTTON -> {
-                String[] titles = new String[]{
-                        "Самый быстрый", "Самый дешевый", "Оптимальный", EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT)};
-                String[] callBacks = new String[]{
-                        FIND_FASTEST, FIND_CHEAPEST, FIND_OPTIMAL, RETURN_TO_MAIN_MENU};
-                InlineKeyboardMarkup inlineKeyboardMarkup = CreateButtons.inLineButtons(
-                        1, 4, titles, callBacks);
+                InlineKeyboardMarkup inlineKeyboardMarkup = searchMenuMarkup();
                 EditMessageText editMessage = MessageUtil.editMessage(
-                        chatId, messageId, "Какой маршрут искать?", inlineKeyboardMarkup);
+                        chatId, messageId, WHICH_SEARCH, inlineKeyboardMarkup);
                 executeChecked(editMessage);
             }
             case FIND_CHEAPEST -> {
@@ -342,12 +336,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             case FIND_FASTEST -> {
                 String text = "Поиск самого быстрого маршрута...";
-                EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
-                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
-                executeChecked(editMessage);
-            }
-            case FIND_OPTIMAL -> {
-                String text = "Поиск оптимального маршрута...";
                 EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
                         CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
                 executeChecked(editMessage);
@@ -378,6 +366,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
         log.info("Callback data received from user: " + update.getMessage().getChat().getFirstName());
+    }
+
+    private InlineKeyboardMarkup searchMenuMarkup() {
+        String[] titles = new String[]{
+                "Быстрее", "Дешевле", EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT)};
+        String[] callBacks = new String[]{
+                FIND_FASTEST, FIND_CHEAPEST, RETURN_TO_MAIN_MENU};
+        return CreateButtons.inLineButtons(1, 3, titles, callBacks);
     }
 
 }
