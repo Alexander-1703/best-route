@@ -337,19 +337,19 @@ public class TelegramBot extends TelegramLongPollingBot {
             case FIND_CHEAPEST -> {
                 String text = "Поиск самого дешевого маршрута...";
                 EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
-                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
+                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
                 executeChecked(editMessage);
             }
             case FIND_FASTEST -> {
                 String text = "Поиск самого быстрого маршрута...";
                 EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
-                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
+                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
                 executeChecked(editMessage);
             }
             case FIND_OPTIMAL -> {
                 String text = "Поиск оптимального маршрута...";
                 EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
-                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), RETURN_TO_MAIN_MENU));
+                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
                 executeChecked(editMessage);
             }
             case RETURN_TO_MAIN_MENU -> {
