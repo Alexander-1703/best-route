@@ -15,8 +15,8 @@ class PassengerWrapper {
     private static final By COUNTER = byAttribute("aria-live", "assertive");
     private static final By ADD_PSNG_BTN = byXpath(".//div[@role = 'button'][2]");
 
-    private By rootElem;
-    private int needAmount;
+    private final By rootElem;
+    private final int needAmount;
 
     PassengerWrapper(By rootElem, int needAmount) {
         $(rootElem).shouldBe(visible.because("Нет элемента типа пассажира"));
