@@ -1,4 +1,4 @@
-package io.proj3ct.BestRouteBot.config;
+package io.proj3ct.BestRouteBot.controller.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -8,7 +8,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import io.proj3ct.BestRouteBot.service.TelegramBot;
+import io.proj3ct.BestRouteBot.controller.service.TelegramBot;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
