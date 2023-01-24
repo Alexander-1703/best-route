@@ -392,16 +392,25 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<Ticket> ticketsList = new Parser().getTickets(user.getDeparture(), user.getDestination(), user.getDate().toString(),
                 1, 0, 0, TripType.Economic);
         for (Ticket ticket : ticketsList) {
-            String text = "Ссылка: " + ticket.getUrl() +
-                    "\n" + ticket.getWayPoints() +
-                    "\n" + ticket.getDateStart() + " " + ticket.getTimeStart() +
-                    "   " + ticket.getDateEnd() + " " + ticket.getTimeEnd() +
-                    "\n" + ticket.getTripTime() +
-                    "\n" + ticket.getTransferAmount() +
-                    "\n" + ticket.getPrice();
+            String text = ticket.getUrl() +
+                    "\n\n" + fixWayPointsFormat(ticket.getWayPoints())+
+                    "\n\n" + ticket.getDateStart() + " " + ticket.getTimeStart() +
+                    "  -  " + ticket.getDateEnd() + " " + ticket.getTimeEnd() +
+                    "\n\nВремя в пути: " + ticket.getTripTime() +
+                    "\n\n" + ticket.getTransferAmount() +
+                    "\n\nЦена: " + ticket.getPrice() + " руб.";
             SendMessage message = MessageUtil.sendMessage(chatId, text);
             executeChecked(message);
         }
+    }
+
+    private String fixWayPointsFormat(String wayPoints) {
+        StringBuilder sb = new StringBuilder();
+        for (String str: wayPoints.split("\n")) {
+
+            sb.append(str).append(" -> ");
+        }
+        return sb.substring(0, sb.length()-4);
     }
 
     private User getUser(long chatId) {
