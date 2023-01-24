@@ -1,4 +1,4 @@
-package parser;
+package io.proj3ct.BestRouteBot.controller.parser;
 
 import com.codeborne.selenide.Configuration;
 import io.github.bonigarcia.wdm.WebDriverManager;

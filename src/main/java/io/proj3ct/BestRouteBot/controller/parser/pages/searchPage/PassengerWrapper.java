@@ -1,4 +1,4 @@
-package parser.pages.searchPage;
+package io.proj3ct.BestRouteBot.controller.parser.pages.searchPage;
 
 import org.openqa.selenium.By;
 

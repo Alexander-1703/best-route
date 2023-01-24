@@ -1,4 +1,4 @@
-package parser.pages.TicketsPage;
+package io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

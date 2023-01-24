@@ -1,4 +1,4 @@
-package parser.pages;
+package io.proj3ct.BestRouteBot.controller.parser.pages;
 
 /**
  * Интерфейс - свойство, пресуще каждой странице - загружена
