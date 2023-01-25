@@ -316,14 +316,17 @@ public class TelegramBot extends TelegramLongPollingBot {
                         chatId, messageId, WHICH_SEARCH, inlineKeyboardMarkup));
             }
             case FIND_CHEAPEST -> {
-                String text = "Поиск самого дешевого маршрута... Подождите пару минут...";
+                String text = "Поиск дешевых маршрутов... Подождите пару минут...";
                 executeChecked(MessageUtil.editMessage(chatId, messageId, text));
-                findRoute(chatId, true);
+                Thread findRoute = new Thread(new FindRoute(chatId, SearchMode.CHEAPER));
+                findRoute.start();
+                System.out.println("ALL DONE");
             }
             case FIND_FASTEST -> {
-                String text = "Поиск самого быстрого маршрута... Подождите пару минут...";
+                String text = "Поиск быстрых маршрутов... Подождите пару минут...";
                 executeChecked(MessageUtil.editMessage(chatId, messageId, text));
-                findRoute(chatId, false);
+                Thread findRoute = new Thread(new FindRoute(chatId, SearchMode.FASTER));
+                findRoute.start();
             }
             case RETURN_TO_MAIN_MENU -> executeChecked(MessageUtil.editMessage(chatId, messageId, menuText(chatId), menu()));
             case HELP_BUTTON -> executeChecked(MessageUtil.editMessage(chatId, messageId, HELP_TEXT,
@@ -343,28 +346,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
         log.info("Callback data received from user: " + update.getMessage().getChat().getFirstName());
-    }
-
-    private void findRoute(long chatId, boolean isCheapest) {
-        User user = getUser(chatId);
-        List<Ticket> ticketsList = new Parser().getTickets(user.getDeparture(), user.getDestination(), user.getDate().toString(),
-                1, 0, 0, TripType.Economic);
-        Collections.reverse(ticketsList);
-        for (Ticket ticket : ticketsList) {
-            String text = EmojiParser.parseToUnicode(ticket.getUrl() + "\n\n" +
-                    fixWayPointsFormat(ticket.getWayPoints()) + "\n\n" +
-                    ":airplane_departure: Отправление: " + ticket.getDateStart() + " " + ticket.getTimeStart() + "\n\n" +
-                    ":airplane_arrival: Прибытие: " + ticket.getDateEnd() + " " + ticket.getTimeEnd() + "\n\n" +
-                    ":clock3: Время в пути: " + ticket.getTripTime() + "\n\n" +
-                    ticket.getTransferAmount() + "\n\n" +
-                    ":dollar: Цена: " + ticket.getPrice() + " ₽");
-            executeChecked(MessageUtil.sendMessage(chatId, text));
-        }
-        executeChecked(MessageUtil.sendMessage(chatId, "Билеты отсортированы в порядке возрастания "
-                        + (isCheapest ? "цены" : "времени в пути") + " . " +
-                        "Самый нижний - самый " + (isCheapest ? "дешевый" : "быстрый"),
-                CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(":arrow_left: В главное меню"), MENU_BUTTON)));
-
     }
 
     private String fixWayPointsFormat(String wayPoints) {
@@ -393,9 +374,38 @@ public class TelegramBot extends TelegramLongPollingBot {
         return date.substring(6, 10) + "-" + date.substring(3, 5) + "-" + date.substring(0, 2);
     }
 
-    private String localDateToString(LocalDate date) {
-        String strDate = date.toString();
-        return strDate.substring(8, 10) + " " + strDate.substring(5, 7) + " " + strDate.substring(0, 4);
+    private class FindRoute implements Runnable {
+        long chatId;
+        SearchMode searchMode;
+
+        public FindRoute(long chatId, SearchMode searchMode) {
+            this.chatId = chatId;
+            this.searchMode = searchMode;
+        }
+
+        @Override
+        public void run() {
+            User user = getUser(chatId);
+
+            List<Ticket> ticketsList = new Parser().getTickets(user.getDeparture(), user.getDestination(), user.getDate().toString(),
+                    1, 0, 0, TripType.Economic);
+            Collections.reverse(ticketsList);
+            for (Ticket ticket : ticketsList) {
+                String text = EmojiParser.parseToUnicode(ticket.getUrl() + "\n\n" +
+                        fixWayPointsFormat(ticket.getWayPoints()) + "\n\n" +
+                        ":airplane_departure: Отправление: " + ticket.getDateStart() + " " + ticket.getTimeStart() + "\n\n" +
+                        ":airplane_arrival: Прибытие: " + ticket.getDateEnd() + " " + ticket.getTimeEnd() + "\n\n" +
+                        ":clock3: Время в пути: " + ticket.getTripTime() + "\n\n" +
+                        ticket.getTransferAmount() + "\n\n" +
+                        ":dollar: Цена: " + ticket.getPrice() + " ₽");
+                executeChecked(MessageUtil.sendMessage(chatId, text));
+            }
+            executeChecked(MessageUtil.sendMessage(chatId, "Билеты отсортированы в порядке возрастания "
+                            + (searchMode == SearchMode.CHEAPER ? "цены" : "времени в пути") + " . " +
+                            "Самый нижний - самый " + (searchMode == SearchMode.CHEAPER ? "дешевый" : "быстрый"),
+                    CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(":arrow_left: В главное меню"), MENU_BUTTON)));
+        }
     }
 
 }
+
