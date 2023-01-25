@@ -23,6 +23,9 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import com.vdurmont.emoji.EmojiParser;
 
 import io.proj3ct.BestRouteBot.controller.config.BotConfig;
+import io.proj3ct.BestRouteBot.controller.parser.Parser;
+import io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage.Ticket;
+import io.proj3ct.BestRouteBot.controller.parser.pages.searchPage.TripType;
 import io.proj3ct.BestRouteBot.model.CityRepository;
 import io.proj3ct.BestRouteBot.model.User;
 import io.proj3ct.BestRouteBot.model.UserRepository;
@@ -37,7 +40,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private static final String SETTINGS_BUTTON = "settings button";
     private static final String SEARCH_BUTTON = "search menu button";
     private static final String FIND_FASTEST = "fastest route";
-    private static final String FIND_OPTIMAL = "optimal route";
     private static final String FIND_CHEAPEST = "cheapest route";
     private static final String RETURN_TO_MAIN_MENU = "return to main menu";
     private static final String HELP_BUTTON = "help button";
@@ -86,6 +88,25 @@ public class TelegramBot extends TelegramLongPollingBot {
             log.error("Bot command list setup error");
         }
 
+    }
+
+    public static String universalCapitalize(String string) {
+        string = string.toLowerCase();
+        if (string.contains("-") || string.contains(" ")) {
+            String symbol = string.contains("-") ? "-" : " ";
+            String[] strArr = string.split(symbol);
+            StringBuilder sb = new StringBuilder();
+            for (String str : strArr) {
+                sb.append(capitalize(str)).append(symbol);
+            }
+            return sb.substring(0, sb.length() - 1);
+        }
+        return capitalize(string);
+    }
+
+    public static String capitalize(String str) {
+        if (str == null || str.length() <= 1) return str;
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
     @Override
@@ -161,16 +182,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
 
-        User user = userRepository.findById(chatId).orElse(null);
-        if (user == null) {
-            log.error(ERROR_OCCURRED + "user NPE");
-            throw new NullPointerException();
-        }
+        User user = getUser(chatId);
 
         String dest = user.getDestination();
         String dep = user.getDeparture();
-        if ((isInSettingsDeparture && dest != null && (dest.equals(msg.toUpperCase()))) ||
-                isInSettingsDestination && dep != null && (dep.equals(msg.toUpperCase()))) {
+        if ((isInSettingsDeparture && dest != null && (dest.equals(universalCapitalize(msg)))) ||
+                isInSettingsDestination && dep != null && (dep.equals(universalCapitalize(msg)))) {
             isInSettingsDestination = false;
             isInSettingsDeparture = false;
             message = MessageUtil.sendMessage(chatId, "Города отправления и прибытия совпадают");
@@ -185,13 +202,13 @@ public class TelegramBot extends TelegramLongPollingBot {
             isInSettingsDeparture = false;
             log.info("The user " + update.getMessage().getChat().getFirstName() +
                     " entered the departure city: " + msg);
-            user.setDeparture(msg.toUpperCase());
+            user.setDeparture(universalCapitalize(msg));
             userRepository.save(user);
         } else if (isInSettingsDestination) {
             isInSettingsDestination = false;
             log.info("The user " + update.getMessage().getChat().getFirstName() +
                     " entered the destination city: " + msg);
-            user.setDestination(msg.toUpperCase());
+            user.setDestination(universalCapitalize(msg));
             userRepository.save(user);
         } else if (isInSettingsDate) {
             isInSettingsDate = false;
@@ -289,8 +306,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         return "Ты можешь настроить параметры маршрута, нажав на кнопку \"Настройки\".\n\n" +
                 "Текущие настройки:\n\n" +
-                "Отправление: " + ((departure != null) ? departure.toUpperCase() : NO_DATA) +
-                "\nПрибытие: " + ((destination != null) ? destination.toUpperCase() : NO_DATA) +
+                "Отправление: " + ((departure != null) ? universalCapitalize(departure) : NO_DATA) +
+                "\nПрибытие: " + ((destination != null) ? universalCapitalize(destination) : NO_DATA) +
                 "\nДата: " + ((date != null) ? date : NO_DATA);
     }
 
@@ -303,7 +320,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private boolean isCityExist(String msg) {
-        return cityRepository.existsById(msg.toUpperCase());
+        return cityRepository.existsById(universalCapitalize(msg));
     }
 
     private void callBackResponse(Update update) {
@@ -330,15 +347,17 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             case FIND_CHEAPEST -> {
                 String text = "Поиск самого дешевого маршрута...";
-                EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
-                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
-                executeChecked(editMessage);
+                findRoute(chatId, true);
+//                EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
+//                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
+//                executeChecked(editMessage);
             }
             case FIND_FASTEST -> {
                 String text = "Поиск самого быстрого маршрута...";
-                EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
-                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
-                executeChecked(editMessage);
+                findRoute(chatId, false);
+//                EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, text,
+//                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(RETURN_BUTTON_TEXT), SEARCH_BUTTON));
+//                executeChecked(editMessage);
             }
             case RETURN_TO_MAIN_MENU -> {
                 EditMessageText editMessage = MessageUtil.editMessage(chatId, messageId, menuText(chatId), menu());
@@ -366,6 +385,41 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
         log.info("Callback data received from user: " + update.getMessage().getChat().getFirstName());
+    }
+
+    private void findRoute(long chatId, boolean isCheapest) {
+        User user = getUser(chatId);
+        List<Ticket> ticketsList = new Parser().getTickets(user.getDeparture(), user.getDestination(), user.getDate().toString(),
+                1, 0, 0, TripType.Economic);
+        for (Ticket ticket : ticketsList) {
+            String text = ticket.getUrl() +
+                    "\n\n" + fixWayPointsFormat(ticket.getWayPoints())+
+                    "\n\n" + ticket.getDateStart() + " " + ticket.getTimeStart() +
+                    "  -  " + ticket.getDateEnd() + " " + ticket.getTimeEnd() +
+                    "\n\nВремя в пути: " + ticket.getTripTime() +
+                    "\n\n" + ticket.getTransferAmount() +
+                    "\n\nЦена: " + ticket.getPrice() + " руб.";
+            SendMessage message = MessageUtil.sendMessage(chatId, text);
+            executeChecked(message);
+        }
+    }
+
+    private String fixWayPointsFormat(String wayPoints) {
+        StringBuilder sb = new StringBuilder();
+        for (String str: wayPoints.split("\n")) {
+
+            sb.append(str).append(" -> ");
+        }
+        return sb.substring(0, sb.length()-4);
+    }
+
+    private User getUser(long chatId) {
+        User user = userRepository.findById(chatId).orElse(null);
+        if (user == null) {
+            log.error(ERROR_OCCURRED + "user NPE");
+            throw new NullPointerException();
+        }
+        return user;
     }
 
     private InlineKeyboardMarkup searchMenuMarkup() {
