@@ -1,8 +1,8 @@
-package parser.pages.searchPage;
+package io.proj3ct.BestRouteBot.controller.parser.pages.searchPage;
 
 import org.openqa.selenium.By;
-import parser.pages.Loadable;
-import parser.pages.TicketsPage.TicketsPage;
+import io.proj3ct.BestRouteBot.controller.parser.pages.Loadable;
+import io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage.TicketsPage;
 import java.util.List;
 
 import static com.codeborne.selenide.Condition.visible;

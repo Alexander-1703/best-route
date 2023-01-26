@@ -1,8 +1,8 @@
-package parser.pages.TicketsPage;
+package io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage;
+
+import org.openqa.selenium.By;
 
 import com.codeborne.selenide.SelenideElement;
-import com.codeborne.selenide.WebDriverRunner;
-import org.openqa.selenium.By;
 
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selectors.byClassName;

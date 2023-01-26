@@ -1,9 +1,9 @@
-package parser.pages.TicketsPage;
+package io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage;
 
 import com.codeborne.selenide.SelenideElement;
 import com.codeborne.selenide.WebDriverRunner;
 import org.openqa.selenium.By;
-import parser.pages.Loadable;
+import io.proj3ct.BestRouteBot.controller.parser.pages.Loadable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

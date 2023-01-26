@@ -349,7 +349,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private String fixWayPointsFormat(String wayPoints) {
-        return wayPoints.replaceAll("\n", " -> ");
+        return wayPoints.replaceAll("\n", " - ");
     }
 
     private User getUser(long chatId) {
@@ -389,9 +389,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             List<Ticket> ticketsList = new Parser().getTickets(user.getDeparture(), user.getDestination(), user.getDate().toString(),
                     1, 0, 0, TripType.Economic);
+            if (ticketsList == null) {
+                executeChecked(MessageUtil.sendMessage(chatId, "Не найдено ни одного билета(",
+                        CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(":arrow_left: В главное меню"), MENU_BUTTON)));
+                return;
+            }
             Collections.reverse(ticketsList);
             for (Ticket ticket : ticketsList) {
-                String text = EmojiParser.parseToUnicode(ticket.getUrl() + "\n\n" +
+                String text = EmojiParser.parseToUnicode(Ticket.getUrl() + "\n\n" +
                         fixWayPointsFormat(ticket.getWayPoints()) + "\n\n" +
                         ":airplane_departure: Отправление: " + ticket.getDateStart() + " " + ticket.getTimeStart() + "\n\n" +
                         ":airplane_arrival: Прибытие: " + ticket.getDateEnd() + " " + ticket.getTimeEnd() + "\n\n" +

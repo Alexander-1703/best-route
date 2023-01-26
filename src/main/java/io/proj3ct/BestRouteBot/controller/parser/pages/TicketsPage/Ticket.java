@@ -1,4 +1,4 @@
-package parser.pages.TicketsPage;
+package io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,6 +11,7 @@ import lombok.ToString;
 public class Ticket {
 
     @Setter
+    @Getter
     private static String url;
     private final String wayPoints, timeStart, timeEnd, dateStart, dateEnd, tripTime, transferAmount, price;
 }

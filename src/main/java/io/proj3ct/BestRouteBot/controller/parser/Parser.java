@@ -1,9 +1,9 @@
-package parser;
+package io.proj3ct.BestRouteBot.controller.parser;
 
-import parser.pages.TicketsPage.Ticket;
-import parser.pages.TicketsPage.TicketsPage;
-import parser.pages.searchPage.TripType;
-import parser.pages.searchPage.SearchPage;
+import io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage.Ticket;
+import io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage.TicketsPage;
+import io.proj3ct.BestRouteBot.controller.parser.pages.searchPage.TripType;
+import io.proj3ct.BestRouteBot.controller.parser.pages.searchPage.SearchPage;
 
 import javax.annotation.Nullable;
 import java.util.List;
