@@ -1,9 +1,8 @@
-package io.proj3ct.BestRouteBot.controller.parser.pages.searchPage;
+package parser.pages.searchPage;
 
 import org.openqa.selenium.By;
-import io.proj3ct.BestRouteBot.controller.parser.pages.Loadable;
-import io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage.TicketsPage;
-
+import parser.pages.Loadable;
+import parser.pages.TicketsPage.TicketsPage;
 import java.util.List;
 
 import static com.codeborne.selenide.Condition.visible;
@@ -18,10 +17,10 @@ public class SearchPage implements Loadable {
     private static final By PANEL = byClassName("panel--search");
     private static final By FROM_FIELD = byXpath("//*[@formcontrolname = 'departureStation']//input");
     private static final By ARRIVE_FIELD = byXpath("//*[@formcontrolname = 'arrivalStation']//input");
-    private static final By START_DATE_FIELD = byXpath("//*[@aria-label = 'Туда']");
-    private static final By BACK_DATE_FIELD = byXpath("//*[@aria-label = 'Обратно']");
+    private static final By START_DATE_FIELD = byXpath("//ui-kit-input[@id = 'ui-kit-input-1']");
+    private static final By BACK_DATE_FIELD = byXpath("//ui-kit-input[@id = 'ui-kit-input-2']");
     private static final By PASSNGR_OPTIONS = byId("click-element");
-    private static final By FIND_BTN = withTextCaseInsensitive("Найти");
+    private static final By FIND_BTN = byXpath("//button[@class = 'button--prime']");
 
     public SearchPage() {
         loaded();
@@ -41,7 +40,7 @@ public class SearchPage implements Loadable {
     }
 
     private void chooseLocation(String location) { // Can be problems with cases-CASES (from TG)
-        By firstListLocation = byXpath(
+         By firstListLocation = byXpath(
                 String.format("//wl-station-description//*[contains(text(), '%s')]", location)
         );
         $(firstListLocation).shouldBe(visible.because("Таких населенных пунктов нет")).click();
@@ -54,7 +53,7 @@ public class SearchPage implements Loadable {
                 formatDate(date)
         );
         By needDateElem = byXpath(dateLocator);
-        By nextMonthElem =byXpath("//*[@class = 'ui-kit-datepicker__navigation']/div[position() = 2]");
+        By nextMonthElem = byXpath("//*[@class = 'ui-kit-datepicker__navigation']/div[position() = 2]");
 
         while (!($(needDateElem).is(visible))) {
             $(nextMonthElem).shouldBe(visible.because("Нет стрелки след. месяца")).click();

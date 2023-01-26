@@ -1,4 +1,4 @@
-package io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage;
+package parser.pages.TicketsPage;
 
 import com.codeborne.selenide.SelenideElement;
 import com.codeborne.selenide.WebDriverRunner;
@@ -24,6 +24,7 @@ public class TicketElemWrapp {
     private final static By MIN_PRICE = byClassName("wl-integer");
 
     private final SelenideElement rootElem;
+    //private final String dateStart;
 
     TicketElemWrapp(SelenideElement rootElem) {
         this.rootElem = rootElem;
@@ -35,7 +36,6 @@ public class TicketElemWrapp {
      * @return билет с информацией о нем
      */
     public Ticket getTicket() {
-        String url = WebDriverRunner.getWebDriver().getCurrentUrl(); // static
         String wayPoints = getElemText(WAY_POINTS, "Нет элемента с городами билета");
         String timeStart = getElemText(TIME_START, "Нет элемента с началом времени");
         String timeEnd = getElemText(TIME_END, "Нет элемента с конечном временем");
@@ -43,10 +43,10 @@ public class TicketElemWrapp {
         String transferAmount = getElemText(TRANSFER_AMOUNT, "Нет элемента с кол-вом перемадок");
         String price = getElemText(MIN_PRICE, "Нет элемента с ценой");
 
-        String dateStart = rootElem.$(DATE_START).is(visible) ? rootElem.$(DATE_START).text() : "заданный изначально день"; // fix shit
-        String dateEnd = rootElem.$(DATE_END).is(visible) ? rootElem.$(DATE_END).text() : "заданный изначально день";
+        String dateStart = rootElem.$(DATE_START).is(visible) ? rootElem.$(DATE_START).text() : "";
+        String dateEnd = rootElem.$(DATE_END).is(visible) ? rootElem.$(DATE_END).text() : "";
 
-        return new Ticket(url, wayPoints, timeStart, timeEnd, dateStart, dateEnd, tripTime, transferAmount, price);
+        return new Ticket(wayPoints, timeStart, timeEnd, dateStart, dateEnd, tripTime, transferAmount, price);
     }
 
     private String getElemText(By elem, String errMsg) {

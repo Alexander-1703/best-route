@@ -1,4 +1,4 @@
-package io.proj3ct.BestRouteBot.controller.parser;
+package parser;
 
 import com.codeborne.selenide.Configuration;
 import io.github.bonigarcia.wdm.WebDriverManager;
@@ -14,5 +14,6 @@ public class BaseParser {
         Configuration.driverManagerEnabled = true;
         Configuration.holdBrowserOpen = true; // delete
         Configuration.timeout = 8_000;
+      //  Configuration.headless = true;
     }
 }

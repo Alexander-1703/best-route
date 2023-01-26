@@ -1,4 +1,4 @@
-package io.proj3ct.BestRouteBot.controller.parser.pages.searchPage;
+package parser.pages.searchPage;
 
 /**
  * Тип поездки: эконом, бизнес, первый
