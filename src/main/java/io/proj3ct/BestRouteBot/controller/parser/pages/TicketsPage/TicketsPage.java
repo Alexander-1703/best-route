@@ -1,10 +1,12 @@
-package io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage;
+package parser.pages.TicketsPage;
 
 import com.codeborne.selenide.SelenideElement;
+import com.codeborne.selenide.WebDriverRunner;
 import org.openqa.selenium.By;
-import io.proj3ct.BestRouteBot.controller.parser.pages.Loadable;
+import parser.pages.Loadable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selectors.*;
@@ -16,11 +18,13 @@ import static com.codeborne.selenide.Selenide.$$;
  */
 public class TicketsPage implements Loadable {
 
-    private static final By LEFT_OPTIONS_PANEL = byTagName("wl-filter-container");
-    private static final By MAIN_TICKETS_PANEL = byClassName("results-cards");
     private static final By TICKET_CARD = byTagName("wl-search-results-card-cmmt");
+    private static final By LEFT_OPTIONS_PANEL = byTagName("wl-filter-container");
+    private static final By TRANSFER_DURATION = byXpath("//div[@class = 'wl-filter-transfer__duration-title']/..");
     private static final By EMPTY_WRAPPER = byClassName("search-not-found__title");
-    private static final By COMPOS_ROUTE_INFO = byXpath("//*[contains(@class, 'result-tab-label__info')]");
+    private static final By MAIN_TICKETS_PANEL = byClassName("results-cards");
+    private static final By COMPOS_ROUTE_INFO =
+            byXpath("//*[text() = 'Составные  маршруты']/../div[contains(@class, 'result-tab-label__info')]");
 
     public TicketsPage() {
         loaded();
@@ -34,23 +38,26 @@ public class TicketsPage implements Loadable {
 
         if ($(EMPTY_WRAPPER).is(visible)) {
             return null;
+
         } else {
             $(LEFT_OPTIONS_PANEL).shouldBe(visible.because("Нет левой панели с опциями для билетов"));
+            $(TRANSFER_DURATION).shouldBe(visible.because("Нет ползунка выбора длительности пересадки"));
         }
 
         List<SelenideElement> ticketElems = $$(TICKET_CARD)
                 .asFixedIterable()
                 .stream()
-                .limit(10).toList();
+                .limit(10)
+                .collect(Collectors.toList());
         List<Ticket> tickets = new ArrayList<>(10);
 
+        Ticket.setUrl(WebDriverRunner.getWebDriver().getCurrentUrl());
         for (var elem: ticketElems) {
             Ticket ticket = new TicketElemWrapp(elem).getTicket();
             tickets.add(ticket);
         }
         return tickets;
     }
-
 
     @Override
     public void loaded() {

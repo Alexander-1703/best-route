@@ -1,9 +1,11 @@
-package io.proj3ct.BestRouteBot.controller.parser;
+package parser;
 
-import io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage.Ticket;
-import io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage.TicketsPage;
-import io.proj3ct.BestRouteBot.controller.parser.pages.searchPage.TripType;
-import io.proj3ct.BestRouteBot.controller.parser.pages.searchPage.SearchPage;
+import parser.pages.TicketsPage.Ticket;
+import parser.pages.TicketsPage.TicketsPage;
+import parser.pages.searchPage.TripType;
+import parser.pages.searchPage.SearchPage;
+
+import javax.annotation.Nullable;
 import java.util.List;
 
 import static com.codeborne.selenide.Selenide.closeWebDriver;
@@ -22,9 +24,9 @@ public class Parser extends BaseParser {
      * @param childrenAmount кол-во детей (<b>max = 6</b>)
      * @param babyAmount кол-во младенцев (<b>max = 2</b>) Не может быть больше кол-ва взрослых
      * @param tripType тип поездки: эконом, бизнес, первый
-     * @return лист билетов (<b>max = 10</b>), подобранных по заданным параметрам
+     * @return лист билетов (<b>max = 10</b>), подобранных по заданным параметрам. Если билетов нет -> <i>null</i>
      */
-    public List<Ticket> getTickets(String startLocation, String endLocation, String date,
+    public @Nullable List<Ticket> getTickets(String startLocation, String endLocation, String date,
                                    int adultsAmount, int childrenAmount, int babyAmount, TripType tripType) {
         open(URL);
         TicketsPage ticketsPage =  new SearchPage()
