@@ -46,7 +46,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private static final String DEPARTURE_DATE_BUTTON = "departure date button";
     private static final String COMMAND_DOESNT_EXIST = "Извините, данной команды не существует";
     private static final String ERROR_OCCURRED = "Error occurred: ";
-    private static final String RETURN_BUTTON_TEXT = ":arrow_left: Назад";
     private static final String NO_DATA = "Не указано";
     private static final String WHICH_SEARCH = "Какой маршрут искать?";
     private static final String HELP_TEXT = """
@@ -60,6 +59,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             /menu - главное меню
                         
             """;
+    private static final String SETTINGS_TEXT = ":gear: Настройки";
+    private static final String SEARCH_TEXT = ":mag: Найти";
+    private static final String HELP_BUTTON_TEXT = ":information_source: Справка";
+    private static final String CONTINUE_SEARCHING_TEXT = ":arrow_right: Продолжить поиск";
+    private static final String MAIN_MENU_TEXT = ":arrow_left: В главное меню";
+    private static final String RETURN_BUTTON_TEXT = ":arrow_left: Назад";
 
     private final BotConfig config;
 
@@ -263,9 +268,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private InlineKeyboardMarkup menu() {
-        String[] titles = new String[]{EmojiParser.parseToUnicode(":gear: Настройки"),
-                EmojiParser.parseToUnicode(":mag: Найти"),
-                EmojiParser.parseToUnicode(":information_source: Справка")};
+        String[] titles = new String[]{EmojiParser.parseToUnicode(SETTINGS_TEXT),
+                EmojiParser.parseToUnicode(SEARCH_TEXT),
+                EmojiParser.parseToUnicode(HELP_BUTTON_TEXT)};
         String[] callBacks = new String[]{SETTINGS_BUTTON, SEARCH_BUTTON, HELP_BUTTON};
         return CreateButtons.inLineButtons(1, 3, titles, callBacks);
     }
@@ -311,6 +316,22 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             case SETTINGS_BUTTON -> executeChecked(MessageUtil.editMessage(chatId, messageId, menuText(chatId), settingsMenu()));
             case SEARCH_BUTTON -> {
+                User user = getUser(chatId);
+                if (user.getDate().isBefore(LocalDate.now())) {
+                    String[] titles = new String[]{EmojiParser.parseToUnicode(SETTINGS_TEXT),
+                            EmojiParser.parseToUnicode(CONTINUE_SEARCHING_TEXT)};
+                    String[] callbacks = new String[]{SETTINGS_BUTTON, SEARCH_BUTTON};
+                    executeChecked(
+                            MessageUtil.editMessage(chatId, messageId,
+                                    "Введенная вами дата уже прошла и была автоматически заменена сегодняшнюю." +
+                                            " Если вы хотите изменить дату, вы можете сделать это в настройках.",
+                                    CreateButtons.inLineButtons(1, 2, titles, callbacks))
+                    );
+                    user.setDate(LocalDate.now());
+                    userRepository.save(user);
+                    return;
+                }
+
                 InlineKeyboardMarkup inlineKeyboardMarkup = searchMenuMarkup();
                 executeChecked(MessageUtil.editMessage(
                         chatId, messageId, WHICH_SEARCH, inlineKeyboardMarkup));
@@ -320,7 +341,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 executeChecked(MessageUtil.editMessage(chatId, messageId, text));
                 Thread findRoute = new Thread(new FindRoute(chatId, SearchMode.CHEAPER));
                 findRoute.start();
-                System.out.println("ALL DONE");
             }
             case FIND_FASTEST -> {
                 String text = "Поиск быстрых маршрутов... Подождите пару минут...";
@@ -386,7 +406,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         @Override
         public void run() {
             User user = getUser(chatId);
-
             List<Ticket> ticketsList = new Parser().getTickets(user.getDeparture(), user.getDestination(), user.getDate().toString(),
                     1, 0, 0, TripType.Economic);
             if (ticketsList == null) {
@@ -396,10 +415,19 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             Collections.reverse(ticketsList);
             for (Ticket ticket : ticketsList) {
+                String ticketStart = ticket.getDateStart();
+                String ticketEnd = ticket.getDateEnd();
                 String text = EmojiParser.parseToUnicode(Ticket.getUrl() + "\n\n" +
                         fixWayPointsFormat(ticket.getWayPoints()) + "\n\n" +
-                        ":airplane_departure: Отправление: " + ticket.getDateStart() + " " + ticket.getTimeStart() + "\n\n" +
-                        ":airplane_arrival: Прибытие: " + ticket.getDateEnd() + " " + ticket.getTimeEnd() + "\n\n" +
+
+                        ":airplane_departure: Отправление: " +
+                        (ticketStart.isEmpty() ? localDateToText(user.getDate()) : ticketStart) +
+                        " " + ticket.getTimeStart() + "\n\n" +
+
+                        ":airplane_arrival: Прибытие: " +
+                        (ticketEnd.isEmpty() ? localDateToText(user.getDate()) : ticketEnd) +
+                        " " + ticket.getTimeEnd() + "\n\n" +
+
                         ":clock3: Время в пути: " + ticket.getTripTime() + "\n\n" +
                         ticket.getTransferAmount() + "\n\n" +
                         ":dollar: Цена: " + ticket.getPrice() + " ₽");
@@ -408,8 +436,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             executeChecked(MessageUtil.sendMessage(chatId, "Билеты отсортированы в порядке возрастания "
                             + (searchMode == SearchMode.CHEAPER ? "цены" : "времени в пути") + " . " +
                             "Самый нижний - самый " + (searchMode == SearchMode.CHEAPER ? "дешевый" : "быстрый"),
-                    CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(":arrow_left: В главное меню"), MENU_BUTTON)));
+                    CreateButtons.oneInLineButton(EmojiParser.parseToUnicode(MAIN_MENU_TEXT), MENU_BUTTON)));
         }
+    }
+
+    private String localDateToText(LocalDate date) {
+        return date.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
     }
 
 }

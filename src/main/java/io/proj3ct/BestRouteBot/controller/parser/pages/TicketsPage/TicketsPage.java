@@ -1,20 +1,24 @@
 package io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage;
 
-import com.codeborne.selenide.SelenideElement;
-import com.codeborne.selenide.WebDriverRunner;
-import org.openqa.selenium.By;
-import io.proj3ct.BestRouteBot.controller.parser.pages.Loadable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import org.openqa.selenium.By;
+
+import com.codeborne.selenide.SelenideElement;
+import com.codeborne.selenide.WebDriverRunner;
+
+import io.proj3ct.BestRouteBot.controller.parser.pages.Loadable;
 
 import static com.codeborne.selenide.Condition.visible;
-import static com.codeborne.selenide.Selectors.*;
+import static com.codeborne.selenide.Selectors.byClassName;
+import static com.codeborne.selenide.Selectors.byTagName;
+import static com.codeborne.selenide.Selectors.byXpath;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 
 /**
- * Страница с результатми поиска билетов
+ * Страница с результатами поиска билетов
  */
 public class TicketsPage implements Loadable {
 
@@ -47,8 +51,7 @@ public class TicketsPage implements Loadable {
         List<SelenideElement> ticketElems = $$(TICKET_CARD)
                 .asFixedIterable()
                 .stream()
-                .limit(10)
-                .collect(Collectors.toList());
+                .limit(10).toList();
         List<Ticket> tickets = new ArrayList<>(10);
 
         Ticket.setUrl(WebDriverRunner.getWebDriver().getCurrentUrl());

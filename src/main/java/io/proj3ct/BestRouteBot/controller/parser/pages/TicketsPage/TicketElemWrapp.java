@@ -40,7 +40,7 @@ public class TicketElemWrapp {
         String timeStart = getElemText(TIME_START, "Нет элемента с началом времени");
         String timeEnd = getElemText(TIME_END, "Нет элемента с конечном временем");
         String tripTime = getElemText(TRIP_TIME, "Нет элемента с продолжительностью");
-        String transferAmount = getElemText(TRANSFER_AMOUNT, "Нет элемента с кол-вом перемадок");
+        String transferAmount = getElemText(TRANSFER_AMOUNT, "Нет элемента с кол-вом переcадок");
         String price = getElemText(MIN_PRICE, "Нет элемента с ценой");
 
         String dateStart = rootElem.$(DATE_START).is(visible) ? rootElem.$(DATE_START).text() : "";

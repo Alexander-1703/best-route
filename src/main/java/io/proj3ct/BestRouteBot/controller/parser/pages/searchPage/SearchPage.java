@@ -63,7 +63,7 @@ public class SearchPage implements Loadable {
     }
 
     /**
-     * Создание даты для локатора на странцие
+     * Создание даты для локатора на странице
      * @param date дата в виде yyyy-mm-dd
      * @return дата в виде dd.mm.yyyy
      */
@@ -113,7 +113,7 @@ public class SearchPage implements Loadable {
     }
 
     public TicketsPage find() {
-        try {Thread.sleep(2_000);} catch (Exception e) {}  // Their server is slow, need to wait. Don't know how to fix
+        try {Thread.sleep(2_000);} catch (Exception ignored) {}  // Their server is slow, need to wait. Don't know how to fix
         $(FIND_BTN).shouldBe(visible.because("Нет кнопки поиска")).hover().click();
         return new TicketsPage();
     }
