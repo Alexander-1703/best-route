@@ -17,7 +17,7 @@ public class Parser extends BaseParser {
 
     /**
      * Метод для начала парсинга билетов
-     * @param startLocation стратовая локация
+     * @param startLocation стартовая локация
      * @param endLocation локация прибытия
      * @param date дата отъезда
      * @param adultsAmount кол-во взрослых (<b>min = 1, max = 7</b>). Всего пассажиров: не более 7
