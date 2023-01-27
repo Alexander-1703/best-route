@@ -13,7 +13,7 @@ import static com.codeborne.selenide.Selenide.open;
 
 public class Parser extends BaseParser {
 
-    private final String URL = "https://russpass.tripandfly.ru/";
+    private static final String URL = "https://russpass.tripandfly.ru/";
 
     /**
      * Метод для начала парсинга билетов

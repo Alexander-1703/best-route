@@ -18,7 +18,7 @@ import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 
 /**
- * Страница с результатми поиска билетов
+ * Страница с результатами поиска билетов
  */
 public class TicketsPage implements Loadable {
 
