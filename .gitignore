@@ -31,3 +31,4 @@ build/
 
 ### VS Code ###
 .vscode/
+/src/main/java/io/proj3ct/BestRouteBot/controller/parser/Main.java
