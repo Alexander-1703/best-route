@@ -2,14 +2,13 @@ package io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import com.codeborne.selenide.ElementsCollection;
 import org.openqa.selenium.By;
-
 import com.codeborne.selenide.SelenideElement;
 import com.codeborne.selenide.WebDriverRunner;
-
 import io.proj3ct.BestRouteBot.controller.parser.pages.Loadable;
 
+import static com.codeborne.selenide.CollectionCondition.size;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selectors.byClassName;
 import static com.codeborne.selenide.Selectors.byTagName;
@@ -30,6 +29,11 @@ public class TicketsPage implements Loadable {
     private static final By COMPOS_ROUTE_INFO =
             byXpath("//*[text() = 'Составные  маршруты']/../div[contains(@class, 'result-tab-label__info')]");
 
+    private static final By TICKETS_AMOUNT = byClassName("wl-filter-feature__header__content");
+
+    private static final ElementsCollection ALL_TICKETS = $$(TICKET_CARD);
+
+
     public TicketsPage() {
         loaded();
     }
@@ -40,12 +44,18 @@ public class TicketsPage implements Loadable {
      */
     public List<Ticket> getTicketsList() {
 
-        if ($(EMPTY_WRAPPER).is(visible)) {
+        if ($(EMPTY_WRAPPER).is(visible)) {  // check it with slow internet OR no tickets
             return null;
 
         } else {
             $(LEFT_OPTIONS_PANEL).shouldBe(visible.because("Нет левой панели с опциями для билетов"));
-            $(TRANSFER_DURATION).shouldBe(visible.because("Нет ползунка выбора длительности пересадки"));
+            //$(TRANSFER_DURATION).shouldBe(visible.because("Нет ползунка выбора длительности пересадки"));
+
+            int ticketsAmount = Integer.parseInt($(TICKETS_AMOUNT).getOwnText().trim());
+            for (byte i = 0; i <= ticketsAmount / 10; i++)
+                ALL_TICKETS.last().hover();
+
+            ALL_TICKETS.shouldHave(size(ticketsAmount));
         }
 
         List<SelenideElement> ticketElems = $$(TICKET_CARD)
