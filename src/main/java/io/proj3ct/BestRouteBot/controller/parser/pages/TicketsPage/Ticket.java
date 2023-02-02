@@ -2,7 +2,6 @@ package io.proj3ct.BestRouteBot.controller.parser.pages.TicketsPage;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 @Getter
@@ -10,8 +9,7 @@ import lombok.ToString;
 @ToString(includeFieldNames = false)
 public class Ticket {
 
-    @Setter
-    @Getter
-    private static String url;
-    private final String wayPoints, timeStart, timeEnd, dateStart, dateEnd, tripTime, transferAmount, price;
+    private final String wayPoints, timeStart, timeEnd, dateStart, dateEnd, /**tripTime,*/ transferAmount;
+
+    private final int tripTime, price;
 }
