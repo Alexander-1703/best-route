@@ -15,6 +15,6 @@ public class BaseParser {
         Configuration.driverManagerEnabled = true;
         Configuration.holdBrowserOpen = true; // delete
         Configuration.timeout = 8_000;
-        Configuration.headless = true;
+        //Configuration.headless = true;
     }
 }
