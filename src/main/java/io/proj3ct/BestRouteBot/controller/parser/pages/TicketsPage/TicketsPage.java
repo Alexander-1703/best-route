@@ -44,7 +44,7 @@ public class TicketsPage implements Loadable {
      */
     public List<Ticket> getTicketsList() {
 
-        if ($(EMPTY_WRAPPER).is(visible)) {  // check it with slow internet OR no tickets
+        if ($(EMPTY_WRAPPER).is(visible)) {
             return null;
 
         } else {

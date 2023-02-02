@@ -10,8 +10,9 @@ import lombok.ToString;
 @ToString(includeFieldNames = false)
 public class Ticket {
 
+    private final String wayPoints, timeStart, timeEnd, dateStart, dateEnd, tripTime, transferAmount, price;
+
     @Setter
     @Getter
     private static String url;
-    private final String wayPoints, timeStart, timeEnd, dateStart, dateEnd, tripTime, transferAmount, price;
 }
