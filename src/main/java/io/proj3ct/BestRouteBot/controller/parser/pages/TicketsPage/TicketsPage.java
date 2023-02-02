@@ -49,7 +49,6 @@ public class TicketsPage implements Loadable {
 
         } else {
             $(LEFT_OPTIONS_PANEL).shouldBe(visible.because("Нет левой панели с опциями для билетов"));
-            //$(TRANSFER_DURATION).shouldBe(visible.because("Нет ползунка выбора длительности пересадки"));
 
             int ticketsAmount = Integer.parseInt($(TICKETS_AMOUNT).getOwnText().trim());
             for (byte i = 0; i <= ticketsAmount / 10; i++)
