@@ -417,20 +417,20 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (Ticket ticket : ticketsList) {
                 String ticketStart = ticket.getDateStart();
                 String ticketEnd = ticket.getDateEnd();
-                String text = EmojiParser.parseToUnicode(Ticket.getUrl() + "\n\n" +
+                String text = EmojiParser.parseToUnicode(
                         fixWayPointsFormat(ticket.getWayPoints()) + "\n\n" +
 
-                        ":airplane_departure: Отправление: " +
-                        (ticketStart.isEmpty() ? localDateToText(user.getDate()) : ticketStart) +
-                        " " + ticket.getTimeStart() + "\n\n" +
+                                ":airplane_departure: Отправление: " +
+                                (ticketStart.isEmpty() ? localDateToText(user.getDate()) : ticketStart) +
+                                " " + ticket.getTimeStart() + "\n\n" +
 
-                        ":airplane_arrival: Прибытие: " +
-                        (ticketEnd.isEmpty() ? localDateToText(user.getDate()) : ticketEnd) +
-                        " " + ticket.getTimeEnd() + "\n\n" +
+                                ":airplane_arrival: Прибытие: " +
+                                (ticketEnd.isEmpty() ? localDateToText(user.getDate()) : ticketEnd) +
+                                " " + ticket.getTimeEnd() + "\n\n" +
 
-                        ":clock3: Время в пути: " + ticket.getTripTime() + "\n\n" +
-                        ticket.getTransferAmount() + "\n\n" +
-                        ":dollar: Цена: " + ticket.getPrice() + " ₽");
+                                ":clock3: Время в пути: " + ticket.getTripTime() + "\n\n" +
+                                ticket.getTransferAmount() + "\n\n" +
+                                ":dollar: Цена: " + ticket.getPrice() + " ₽");
                 executeChecked(MessageUtil.sendMessage(chatId, text));
             }
             executeChecked(MessageUtil.sendMessage(chatId, "Билеты отсортированы в порядке возрастания "
